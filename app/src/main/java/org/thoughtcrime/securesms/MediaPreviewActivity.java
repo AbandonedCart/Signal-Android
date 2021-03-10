@@ -421,7 +421,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
     MediaItem mediaItem = getCurrentMediaItem();
 
     if (mediaItem != null) {
-      SaveAttachmentTask.showWarningDialog(this, (dialogInterface, i) -> {
+//      SaveAttachmentTask.showWarningDialog(this, (dialogInterface, i) -> {
         if (StorageUtil.canWriteToMediaStore()) {
           performSavetoDisk(mediaItem);
           return;
@@ -436,7 +436,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
                      performSavetoDisk(mediaItem);
                    })
                    .execute();
-      });
+//      });
     }
   }
 

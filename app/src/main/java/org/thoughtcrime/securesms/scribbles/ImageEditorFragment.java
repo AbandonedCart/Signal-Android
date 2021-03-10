@@ -442,7 +442,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
 
   @Override
   public void onSave() {
-    SaveAttachmentTask.showWarningDialog(requireContext(), (dialogInterface, i) -> {
+//    SaveAttachmentTask.showWarningDialog(requireContext(), (dialogInterface, i) -> {
       if (StorageUtil.canWriteToMediaStore()) {
         performSaveToDisk();
         return;
@@ -455,7 +455,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
                  .onAnyDenied(() -> Toast.makeText(requireContext(), R.string.MediaPreviewActivity_unable_to_write_to_external_storage_without_permission, Toast.LENGTH_LONG).show())
                  .onAllGranted(this::performSaveToDisk)
                  .execute();
-    });
+//    });
   }
 
   @Override

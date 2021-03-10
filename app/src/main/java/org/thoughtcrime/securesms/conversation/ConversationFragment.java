@@ -1009,7 +1009,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       throw new AssertionError("Cannot save a view-once message.");
     }
 
-    SaveAttachmentTask.showWarningDialog(getActivity(), (dialog, which) -> {
+//    SaveAttachmentTask.showWarningDialog(getActivity(), (dialog, which) -> {
       if (StorageUtil.canWriteToMediaStore()) {
         performSave(message);
         return;
@@ -1022,7 +1022,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
                  .onAnyDenied(() -> Toast.makeText(requireContext(), R.string.MediaPreviewActivity_unable_to_write_to_external_storage_without_permission, Toast.LENGTH_LONG).show())
                  .onAllGranted(() -> performSave(message))
                  .execute();
-    });
+//    });
   }
 
   private void performSave(final MediaMmsMessageRecord message) {
