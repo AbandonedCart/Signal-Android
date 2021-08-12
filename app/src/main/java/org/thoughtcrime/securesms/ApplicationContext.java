@@ -187,7 +187,8 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   @Override
   public void onForeground() {
     long startTime = System.currentTimeMillis();
-    Log.i(TAG, "App is now visible.");
+    if (!BuildConfig.THIRD_PARTY_BUILD)
+      Log.i(TAG, "App is now visible.");
 
     ApplicationDependencies.getFrameRateTracker().begin();
     ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
@@ -208,7 +209,8 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   @Override
   public void onBackground() {
-    Log.i(TAG, "App is no longer visible.");
+    if (!BuildConfig.THIRD_PARTY_BUILD)
+      Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
     ApplicationDependencies.getMessageNotifier().clearVisibleThread();
     ApplicationDependencies.getFrameRateTracker().end();
@@ -289,7 +291,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       Log.i(TAG, "Detected a new install that doesn't have passphrases disabled -- assuming bad initialization.");
       AppInitialization.onRepairFirstEverAppLaunch(this);
     } else if (!TextSecurePreferences.isPasswordDisabled(this) && VersionTracker.getDaysSinceFirstInstalled(this) < 912) {
-      Log.i(TAG, "Detected a not-recent install that doesn't have passphrases disabled -- disabling now.");
+      Log.i(TAG, "Detected a non-recent install that doesn't have passphrases disabled -- disabling now.");
       TextSecurePreferences.setPasswordDisabled(this, true);
     }
   }
@@ -329,7 +331,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     RotateSenderCertificateListener.schedule(this);
     MessageProcessReceiver.startOrUpdateAlarm(this);
 
-    if (BuildConfig.PLAY_STORE_DISABLED) {
+    if (!BuildConfig.THIRD_PARTY_BUILD && BuildConfig.PLAY_STORE_DISABLED) {
       UpdateApkRefreshListener.schedule(this);
     }
   }
@@ -369,7 +371,8 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   private void initializePendingMessages() {
     if (TextSecurePreferences.getNeedsMessagePull(this)) {
-      Log.i(TAG, "Scheduling a message fetch.");
+      if (!BuildConfig.THIRD_PARTY_BUILD)
+        Log.i(TAG, "Scheduling a message fetch.");
       if (Build.VERSION.SDK_INT >= 26) {
         FcmJobService.schedule(this);
       } else {

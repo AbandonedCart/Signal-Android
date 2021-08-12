@@ -25,6 +25,7 @@ public class UpdateApkRefreshListener extends PersistentAlarmManagerListener {
 
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
+    if (BuildConfig.THIRD_PARTY_BUILD) return Integer.MAX_VALUE;
     Log.i(TAG, "onAlarm...");
 
     if (scheduledTime != 0 && BuildConfig.PLAY_STORE_DISABLED) {

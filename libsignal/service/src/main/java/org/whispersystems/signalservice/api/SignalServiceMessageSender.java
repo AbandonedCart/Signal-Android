@@ -22,6 +22,7 @@ import org.whispersystems.libsignal.state.PreKeyBundle;
 import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
+import org.whispersystems.signalservice.BuildConfig;
 import org.whispersystems.signalservice.api.crypto.AttachmentCipherOutputStream;
 import org.whispersystems.signalservice.api.crypto.ContentHint;
 import org.whispersystems.signalservice.api.crypto.EnvelopeContent;
@@ -324,7 +325,8 @@ public class SignalServiceMessageSender {
                                            IndividualSendEvents             sendEvents)
       throws UntrustedIdentityException, IOException
   {
-    Log.d(TAG, "[" + message.getTimestamp() + "] Sending a data message.");
+    if (!BuildConfig.THIRD_PARTY_BUILD)
+      Log.d(TAG, "[" + message.getTimestamp() + "] Sending a data message.");
 
     Content           content         = createMessageContent(message);
     EnvelopeContent   envelopeContent = EnvelopeContent.encrypted(content, contentHint, message.getGroupId());
@@ -422,7 +424,8 @@ public class SignalServiceMessageSender {
                                                       SignalServiceDataMessage   message)
       throws IOException, UntrustedIdentityException, NoSessionException, InvalidKeyException
   {
-    Log.d(TAG, "[" + message.getTimestamp() + "] Sending a group data message to " + recipients.size() + " recipients.");
+    if (!BuildConfig.THIRD_PARTY_BUILD)
+      Log.d(TAG, "[" + message.getTimestamp() + "] Sending a group data message to " + recipients.size() + " recipients.");
 
     Content                 content = createMessageContent(message);
     Optional<byte[]>        groupId = message.getGroupId();
@@ -453,7 +456,8 @@ public class SignalServiceMessageSender {
                                                  CancelationSignal                      cancelationSignal)
       throws IOException, UntrustedIdentityException
   {
-    Log.d(TAG, "[" + message.getTimestamp() + "] Sending a data message to " + recipients.size() + " recipients.");
+    if (!BuildConfig.THIRD_PARTY_BUILD)
+      Log.d(TAG, "[" + message.getTimestamp() + "] Sending a data message to " + recipients.size() + " recipients.");
 
     Content                 content            = createMessageContent(message);
     EnvelopeContent         envelopeContent    = EnvelopeContent.encrypted(content, contentHint, message.getGroupId());
@@ -563,7 +567,8 @@ public class SignalServiceMessageSender {
   {
     AttachmentV2UploadAttributes       v2UploadAttributes = null;
 
-    Log.d(TAG, "Using pipe to retrieve attachment upload attributes...");
+    if (!BuildConfig.THIRD_PARTY_BUILD)
+      Log.d(TAG, "Using pipe to retrieve attachment upload attributes...");
     try {
       v2UploadAttributes = new AttachmentService.AttachmentAttributesResponseProcessor<>(attachmentService.getAttachmentV2UploadAttributes().blockingGet()).getResultOrThrow();
     } catch (WebSocketUnavailableException e) {
@@ -599,7 +604,8 @@ public class SignalServiceMessageSender {
   public ResumableUploadSpec getResumableUploadSpec() throws IOException {
     AttachmentV3UploadAttributes       v3UploadAttributes = null;
 
-    Log.d(TAG, "Using pipe to retrieve attachment upload attributes...");
+    if (!BuildConfig.THIRD_PARTY_BUILD)
+      Log.d(TAG, "Using pipe to retrieve attachment upload attributes...");
     try {
       v3UploadAttributes = new AttachmentService.AttachmentAttributesResponseProcessor<>(attachmentService.getAttachmentV3UploadAttributes().blockingGet()).getResultOrThrow();
     } catch (WebSocketUnavailableException e) {
@@ -1575,7 +1581,8 @@ public class SignalServiceMessageSender {
       }
     }
 
-    Log.d(TAG, "Completed send to " + recipients.size() + " recipients in " + (System.currentTimeMillis() - startTime) + " ms, with an average time of " + Math.round(average) + " ms per send.");
+    if (!BuildConfig.THIRD_PARTY_BUILD)
+      Log.d(TAG, "Completed send to " + recipients.size() + " recipients in " + (System.currentTimeMillis() - startTime) + " ms, with an average time of " + Math.round(average) + " ms per send.");
     return results;
   }
 
@@ -1599,7 +1606,7 @@ public class SignalServiceMessageSender {
       try {
         OutgoingPushMessageList messages = getEncryptedMessages(socket, recipient, unidentifiedAccess, timestamp, content, online);
 
-        if (content.getContent().isPresent() && content.getContent().get().getSyncMessage() != null && content.getContent().get().getSyncMessage().hasSent()) {
+        if (!BuildConfig.THIRD_PARTY_BUILD && content.getContent().isPresent() && content.getContent().get().getSyncMessage() != null && content.getContent().get().getSyncMessage().hasSent()) {
           Log.d(TAG, "[" + timestamp + "] Sending a sent sync message to devices: " + messages.getDevices());
         }
 
@@ -1700,7 +1707,8 @@ public class SignalServiceMessageSender {
                                                                          .map(SignalServiceAddress::new)
                                                                          .collect(Collectors.toList());
       if (needsSenderKey.size() > 0) {
-        Log.i(TAG, "[sendGroupMessage] Need to send the distribution message to " + needsSenderKey.size() + " addresses.");
+        if (!BuildConfig.THIRD_PARTY_BUILD)
+          Log.i(TAG, "[sendGroupMessage] Need to send the distribution message to " + needsSenderKey.size() + " addresses.");
         SenderKeyDistributionMessage           message = getOrCreateNewGroupSession(distributionId);
         List<Optional<UnidentifiedAccessPair>> access  = needsSenderKey.stream()
                                                                        .map(r -> {
@@ -1721,7 +1729,8 @@ public class SignalServiceMessageSender {
 
         store.markSenderKeySharedWith(distributionId, successAddresses);
 
-        Log.i(TAG, "[sendGroupMessage] Successfully sent sender keys to " + successes.size() + "/" + needsSenderKey.size() + " recipients.");
+        if (!BuildConfig.THIRD_PARTY_BUILD)
+          Log.i(TAG, "[sendGroupMessage] Successfully sent sender keys to " + successes.size() + "/" + needsSenderKey.size() + " recipients.");
 
         int failureCount = results.size() - successes.size();
         if (failureCount > 0) {
@@ -1860,10 +1869,12 @@ public class SignalServiceMessageSender {
 
     for (SignalServiceAttachment attachment : attachments.get()) {
       if (attachment.isStream()) {
-        Log.i(TAG, "Found attachment, creating pointer...");
+        if (!BuildConfig.THIRD_PARTY_BUILD)
+          Log.i(TAG, "Found attachment, creating pointer...");
         pointers.add(createAttachmentPointer(attachment.asStream()));
       } else if (attachment.isPointer()) {
-        Log.i(TAG, "Including existing attachment pointer...");
+        if (!BuildConfig.THIRD_PARTY_BUILD)
+          Log.i(TAG, "Including existing attachment pointer...");
         pointers.add(createAttachmentPointer(attachment.asPointer()));
       }
     }

@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import org.signal.core.util.logging.Log;
+import org.thoughtcrime.securesms.BuildConfig;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.util.FileProviderUtil;
@@ -33,6 +34,7 @@ public class UpdateApkReadyListener extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
+    if (BuildConfig.THIRD_PARTY_BUILD) return;
     Log.i(TAG, "onReceive()");
 
     if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) {

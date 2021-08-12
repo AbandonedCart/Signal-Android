@@ -26,7 +26,7 @@ public class RatingManager {
   private static final String TAG = Log.tag(RatingManager.class);
 
   public static void showRatingDialogIfNecessary(Context context) {
-    if (!TextSecurePreferences.isRatingEnabled(context) || BuildConfig.PLAY_STORE_DISABLED) return;
+    if (BuildConfig.THIRD_PARTY_BUILD || !TextSecurePreferences.isRatingEnabled(context) || BuildConfig.PLAY_STORE_DISABLED) return;
 
     long daysSinceInstall = VersionTracker.getDaysSinceFirstInstalled(context);
     long laterTimestamp   = TextSecurePreferences.getRatingLaterTimestamp(context);
