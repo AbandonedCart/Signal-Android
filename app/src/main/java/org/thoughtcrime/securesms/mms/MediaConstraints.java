@@ -38,7 +38,7 @@ public abstract class MediaConstraints {
   public abstract int getImageMaxSize(Context context);
 
   public TranscodingPreset getVideoTranscodingSettings() {
-    return TranscodingPreset.LEVEL_1;
+    return TranscodingPreset.LEVEL_3_H265;
   }
 
   /**
@@ -52,7 +52,7 @@ public abstract class MediaConstraints {
   public abstract long getVideoMaxSize();
 
   public @IntRange(from = 0, to = 100) int getImageCompressionQualitySetting(@NonNull Context context) {
-    return 70;
+    return 100;
   }
 
   public long getUncompressedVideoMaxSize(Context context) {

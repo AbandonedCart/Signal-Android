@@ -44,7 +44,7 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
 
   private static final String TAG               = Log.tag(CameraXVideoCaptureHelper.class);
   private static final String VIDEO_DEBUG_LABEL = "video-capture";
-  private static final long   VIDEO_SIZE        = 10 * 1024 * 1024;
+  private static final long   VIDEO_SIZE        = 50 * 1024 * 1024;
 
   private final @NonNull Fragment             fragment;
   private final @NonNull PreviewView          previewView;

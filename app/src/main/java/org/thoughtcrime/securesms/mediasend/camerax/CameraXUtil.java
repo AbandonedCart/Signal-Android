@@ -174,7 +174,7 @@ public class CameraXUtil {
   private static byte[] toJpegBytes(@NonNull Bitmap bitmap) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-    if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out)) {
+    if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)) {
       throw new IOException("Failed to compress bitmap.");
     }
 

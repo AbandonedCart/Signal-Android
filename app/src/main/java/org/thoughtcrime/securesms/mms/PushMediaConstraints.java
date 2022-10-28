@@ -103,14 +103,33 @@ public class PushMediaConstraints extends MediaConstraints {
     return LocaleRemoteConfig.getMediaQualityLevel().orElse(MediaConfig.getDefault(context));
   }
 
-  public enum MediaConfig {
-    LEVEL_1_LOW_MEMORY(true, 1, MB, new int[] { 768, 512 }, 70, TranscodingPreset.LEVEL_1),
+  private static int[] IMAGE_DIMEN(int n) {
+    int[] values = { 512 };
+    for (int i = 768; i <= n; i = i + 64) {
+      values = Arrays.copyOf(values, values.length + 1);
+      values[values.length - 1] = i;
+    }
+    if (n % 16 != 0) {
+      values = Arrays.copyOf(values, values.length + 1);
+      values[values.length - 1] = n;
+    }
+    // Reverse the array into descending order
+    int length = values.length;
+    for (int i = 0; i < length / 2; i++) {
+      values[i] = values[i] ^ values[length - i - 1];
+      values[length - i - 1] = values[i] ^ values[length - i - 1];
+      values[i] = values[i] ^ values[length - i - 1];
+    }
+    return values;
+  }
 
-    LEVEL_1(false, 1, MB, new int[] { 1600, 1024, 768, 512 }, 70, TranscodingPreset.LEVEL_1),
-    LEVEL_2(false, 2, (int) (1.5 * MB), new int[] { 2048, 1600, 1024, 768, 512 }, 75, TranscodingPreset.LEVEL_2),
-    LEVEL_3(false, 3, (int) (3 * MB), new int[] { 4096, 3072, 2048, 1600, 1024, 768, 512 }, 75, TranscodingPreset.LEVEL_3),
-    /** Experimental H265 level */
-    LEVEL_3_H265(false, 4, 3 * MB, new int[] { 4096, 3072, 2048, 1600, 1024, 768, 512 }, 75, TranscodingPreset.LEVEL_3_H265);
+  public enum MediaConfig {
+    LEVEL_1_LOW_MEMORY(true, 1, (5 * MB), IMAGE_DIMEN(3000), 75, TranscodingPreset.LEVEL_1),
+
+    LEVEL_1(false, 1, (10 * MB), IMAGE_DIMEN(6000), 75, TranscodingPreset.LEVEL_1),
+    LEVEL_2(false, 2, (int) (15 * MB), IMAGE_DIMEN(9000), 75, TranscodingPreset.LEVEL_2),
+    LEVEL_3(false, 3, (int) (20 * MB), IMAGE_DIMEN(12000), 100, TranscodingPreset.LEVEL_3),
+    LEVEL_3_H265(false, 4, (int) (20 * MB), IMAGE_DIMEN(12000), 100, TranscodingPreset.LEVEL_3_H265);
 
     private final boolean           isLowMemory;
     private final int               level;
@@ -160,7 +179,7 @@ public class PushMediaConstraints extends MediaConstraints {
     }
 
     public static @NonNull MediaConfig getDefault(Context context) {
-      return Util.isLowMemory(context) ? LEVEL_1_LOW_MEMORY : LEVEL_1;
+      return Util.isLowMemory(context) ? LEVEL_1_LOW_MEMORY : LEVEL_3_H265;
     }
   }
 }
