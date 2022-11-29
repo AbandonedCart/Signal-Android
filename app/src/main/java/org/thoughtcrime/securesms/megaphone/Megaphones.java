@@ -18,6 +18,7 @@ import org.signal.core.util.MapUtil;
 import org.signal.core.util.SetUtil;
 import org.signal.core.util.TranslationDetection;
 import org.signal.core.util.logging.Log;
+import org.thoughtcrime.securesms.BuildConfig;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.components.settings.app.AppSettingsActivity;
 import org.thoughtcrime.securesms.database.SignalDatabase;
@@ -73,7 +74,7 @@ public final class Megaphones {
   private static final MegaphoneSchedule NEVER  = new ForeverSchedule(false);
 
   private static final Set<Event> DONATE_EVENTS                      = SetUtil.newHashSet(Event.BECOME_A_SUSTAINER, Event.DONATE_Q2_2022);
-  private static final long       MIN_TIME_BETWEEN_DONATE_MEGAPHONES = TimeUnit.DAYS.toMillis(30);
+  private static final long       MIN_TIME_BETWEEN_DONATE_MEGAPHONES = TimeUnit.DAYS.toMillis(Objects.equals(BuildConfig.BUILD_DISTRIBUTION_TYPE, "eightbit") ? 365 : 30);
 
   private Megaphones() {}
 
@@ -531,7 +532,7 @@ public final class Megaphones {
                                        .sorted()
                                        .findFirst()
                                        .orElse(0L);
-    return System.currentTimeMillis() - lastSeenDonatePrompt;
+    return System.currentTimeMillis() - (Objects.equals(BuildConfig.BUILD_DISTRIBUTION_TYPE, "eightbit") ? 0L : lastSeenDonatePrompt);
   }
 
 

@@ -12,6 +12,7 @@ import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import org.signal.core.util.getParcelableCompat
+import org.thoughtcrime.securesms.BuildConfig;
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.badges.BadgeRepository
 import org.thoughtcrime.securesms.badges.models.Badge
@@ -28,6 +29,7 @@ import org.thoughtcrime.securesms.util.CommunicationActions
 import org.thoughtcrime.securesms.util.ViewUtil
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
 import org.thoughtcrime.securesms.util.visible
+import java.util.Objects
 import kotlin.math.ceil
 import kotlin.math.max
 
@@ -58,6 +60,9 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
     }
 
     @Suppress("CascadeIf")
+    if (Objects.equals(BuildConfig.BUILD_DISTRIBUTION_TYPE, "eightbit")) {
+      binding.action.visible = false
+    } else
     if (!InAppDonations.hasAtLeastOnePaymentMethodAvailable()) {
       binding.noSupport.visible = true
       binding.action.icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_open_20)
