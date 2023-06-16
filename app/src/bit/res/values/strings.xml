@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- smartling.instruction_comments_enabled = on -->
+<resources>
+    <string name="app_name" translatable="false">Signal</string>
+
+    <string name="install_url" translatable="false">https://github.com/SamSprung/Signal-Android/releases</string>
+    <string name="donate_url" translatable="false">https://tagmo.gitlab.io/donate.html</string>
+</resources>

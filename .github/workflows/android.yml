@@ -1,24 +1,32 @@
 name: Android CI
 
 on:
-  pull_request:
   push:
     branches:
     - 'main'
-    - '7.**'
 
 permissions:
-  contents: read # to fetch code (actions/checkout)
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
       with:
           submodules: true
+
+    - name: Retrieve commit identification
+      run: |
+         GIT_BRANCH=$(git name-rev --name-only HEAD)
+         echo "GIT_BRANCH=${GIT_BRANCH}" >> $GITHUB_ENV
+         GIT_HASH=$(git rev-parse --short HEAD)
+         echo "GIT_HASH=${GIT_HASH}" >> $GITHUB_ENV
 
     - name: set up JDK 17
       uses: actions/setup-java@v3
@@ -27,15 +35,69 @@ jobs:
         java-version: 17
         cache: gradle
 
-    - name: Validate Gradle Wrapper
-      uses: gradle/wrapper-validation-action@v1
+    - name: Decode Keystore File
+      run: echo "${{ secrets.KEYSTORE }}" | base64 -d > $GITHUB_WORKSPACE/key.keystore
 
-    - name: Build with Gradle
-      run: ./gradlew qa
-
-    - name: Archive reports for failed build
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@v4
+    - uses: burrunan/gradle-cache-action@v1
+      name: Build with Gradle
+      # Extra environment variables for Gradle execution (regular GitHub Actions feature)
+      # Note: env must be outside of "with"
       with:
-        name: reports
-        path: '*/build/reports'
+        job-id: Signal
+        # Specifies arguments for Gradle execution
+        arguments: |
+          --parallel
+          assembleBitProdRelease
+          -Pandroid.injected.signing.store.file=${{ github.workspace }}/key.keystore
+          -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }}
+          -Pandroid.injected.signing.key.alias=${{ secrets.KEYALIAS }}
+          -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+        # Gradle version to use for execution:
+        #   wrapper (default), current, rc, nightly, release-nightly, or
+        #   versions like 6.6 (see https://services.gradle.org/versions/all)
+        gradle-version: wrapper
+        # Properties are passed as -Pname=value
+        properties: |
+          org.gradle.unsafe.configuration-cache=true
+
+    - uses: r0adkll/sign-android-release@v1
+      name: Sign app APK
+      # ID used to access action output
+      id: sign_app
+      with:
+        releaseDirectory: app/build/outputs/apk/bitProd/release
+        signingKeyBase64: ${{ secrets.KEYSTORE }}
+        alias: ${{ secrets.KEYALIAS }}
+        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        # override default build-tools version (29.0.3) -- optional
+        BUILD_TOOLS_VERSION: "34.0.0"
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: Signal-Android-${{ env.GIT_HASH }}
+        retention-days: 1
+        path: ${{steps.sign_app.outputs.signedReleaseFile}}
+
+    - uses: SamSprung/action-github-releases@v1.0.0
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "8bit/${{ env.GIT_BRANCH }}"
+        prerelease: ${{ env.GIT_BRANCH != 'main' }}
+        title: Signal-Android-${{ env.GIT_HASH }}
+        files: ${{steps.sign_app.outputs.signedReleaseFile}}
+
+  clean:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+
+    - name: Purge build cache
+      continue-on-error: true
+      uses: MyAlbum/purge-cache@v2
+      with:
+        max-age: 172800 # 1 day, default: 7 days since last use
+        token: ${{ secrets.GITHUB_TOKEN }}

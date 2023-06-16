@@ -27,6 +27,23 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.security.MessageDigest
 
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import org.json.JSONTokener
+import org.thoughtcrime.securesms.apkupdate.ApkUpdateInstaller
+import java.net.URL
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.Objects
+
 /**
  * Designed to be a periodic job that checks for new app updates when the user is running a build that
  * is distributed outside of the play store (like our website build).
@@ -58,6 +75,12 @@ class ApkUpdateJob private constructor(parameters: Parameters) : BaseJob(paramet
   public override fun onRun() {
     if (!BuildConfig.MANAGES_APP_UPDATES) {
       Log.w(TAG, "Not an app-updating build! Exiting.")
+      return
+    }
+
+    if (Objects.equals(BuildConfig.BUILD_DISTRIBUTION_TYPE, "eightbit")) {
+      getDownloadOrNull(context)
+      SignalStore.apkUpdate.lastSuccessfulCheck = System.currentTimeMillis()
       return
     }
 
@@ -242,6 +265,45 @@ class ApkUpdateJob private constructor(parameters: Parameters) : BaseJob(paramet
   class Factory : Job.Factory<ApkUpdateJob?> {
     override fun create(parameters: Parameters, serializedData: ByteArray?): ApkUpdateJob {
       return ApkUpdateJob(parameters)
+    }
+  }
+
+  private val appName = "Signal-Android"
+  private fun getDownloadOrNull(context: Context) {
+    CoroutineScope(Dispatchers.IO).launch {
+      val result = URL("https://api.github.com/repos/SamSprung/$appName/releases/tags/8bit/main").readText()
+      try {
+        val jsonObject = JSONTokener(result).nextValue() as JSONObject
+        val lastCommit = (jsonObject["name"] as String).removePrefix("$appName-")
+        deleteExistingDownloadedApks(context)
+        if (!BuildConfig.GIT_HASH.startsWith(lastCommit)) {
+          val assets = jsonObject["assets"] as JSONArray
+          val asset = assets[0] as JSONObject
+          val createdAt = asset["created_at"] as String
+          val downloadUrl = asset["browser_download_url"] as String
+          var uploadTimestamp = SignalStore.apkUpdate.lastSuccessfulCheck
+          try {
+            val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ROOT)
+            uploadTimestamp = format.parse(createdAt)?.time ?: uploadTimestamp
+          } catch (ignored: ParseException) { }
+          val downloadRequest = DownloadManager.Request(Uri.parse(downloadUrl)).apply {
+            setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
+            setTitle("Downloading Signal update")
+            setDescription("Downloading Signal $lastCommit")
+            setDestinationInExternalFilesDir(context, null, "signal-update.apk")
+            setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
+          }
+          val downloadId = context.getDownloadManager().enqueue(downloadRequest)
+          SignalStore.apkUpdate.setDownloadAttributes(downloadId, null, uploadTimestamp)
+          ContextCompat.registerReceiver(context, object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent?) {
+              ApkUpdateInstaller.installOrPromptForInstall(context, downloadId, userInitiated = true)
+            }
+          }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), ContextCompat.RECEIVER_EXPORTED)
+        }
+      } catch (e: JSONException) {
+        e.printStackTrace()
+      }
     }
   }
 }

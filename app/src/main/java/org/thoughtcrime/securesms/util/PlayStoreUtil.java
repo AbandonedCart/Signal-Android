@@ -9,11 +9,16 @@ import androidx.annotation.NonNull;
 
 import org.thoughtcrime.securesms.BuildConfig;
 
+import java.util.Objects;
+
 public final class PlayStoreUtil {
 
   private PlayStoreUtil() {}
 
   public static void openPlayStoreOrOurApkDownloadPage(@NonNull Context context) {
+    if (Objects.equals(BuildConfig.BUILD_DISTRIBUTION_TYPE, "eightbit")) {
+      CommunicationActions.openBrowserLink(context, "https://github.com/SamSprung/Signal-Android/releases");
+    } else
     if (BuildConfig.MANAGES_APP_UPDATES) {
       CommunicationActions.openBrowserLink(context, "https://signal.org/android/apk");
     } else {
