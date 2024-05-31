@@ -279,12 +279,12 @@ class ApkUpdateJob private constructor(parameters: Parameters) : BaseJob(paramet
         if (!BuildConfig.GIT_HASH.startsWith(lastCommit)) {
           val assets = jsonObject["assets"] as JSONArray
           val asset = assets[0] as JSONObject
-          val createdAt = asset["created_at"] as String
+          val updatedAt = asset["updated_at"] as String
           val downloadUrl = asset["browser_download_url"] as String
           var uploadTimestamp = SignalStore.apkUpdate.lastSuccessfulCheck
           try {
             val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ROOT)
-            uploadTimestamp = format.parse(createdAt)?.time ?: uploadTimestamp
+            uploadTimestamp = format.parse(updatedAt)?.time ?: uploadTimestamp
           } catch (ignored: ParseException) { }
           val downloadRequest = DownloadManager.Request(Uri.parse(downloadUrl)).apply {
             setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
